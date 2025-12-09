@@ -87,14 +87,22 @@ class ArticleController extends Controller
         ));
 
     }
- public function show($slug)
-    {
-        $article = Article::where('slug', $slug)
-            ->with(['category', 'brand'])
-            ->firstOrFail();
-            
-        // Increment view count
-        $article->increment('views_count');
+    //////:
+public function show($slug)
+{
+    $article = Article::where('slug', $slug)
+        ->with(['category', 'brand'])
+        ->firstOrFail();
         
-        return view('articles.show', compact('article'));
-    }}
+    // Increment view count
+    $article->increment('views_count');
+    
+    // Get related products (products from same category)
+    $relatedProducts = Article::where('category_id', $article->category_id)
+        ->where('id', '!=', $article->id)
+        ->take(4)
+        ->get();
+    
+    return view('single-article', compact('article', 'relatedProducts'));
+}
+}

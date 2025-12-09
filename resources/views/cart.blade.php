@@ -231,7 +231,9 @@
 
               <div class="row">
                 <div class="col-md-12">
-                  <button class="btn btn-black btn-lg py-3 btn-block">Proceed To Checkout</button>
+                         <a href="{{ route('checkout') }}" class="btn btn-success btn-lg py-3 btn-block" id="buy-now-btn">
+            <i class="fas fa-shopping-bag me-2"></i> Buy Now
+        </a>
                 </div>
               </div>
             </div>
@@ -417,6 +419,7 @@
       }, 3000);
     }
   });
+  
   </script>
 </body>
 </html>

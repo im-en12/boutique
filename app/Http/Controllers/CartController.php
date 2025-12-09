@@ -319,4 +319,6 @@ class CartController extends Controller
             return response()->json(['in_cart' => false], 200);
         }
     }
+ 
+
 }

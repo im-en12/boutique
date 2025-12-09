@@ -217,7 +217,7 @@
         <div class="row">
           @foreach($articles as $article)
           <div class="col-12 col-md-4 col-lg-3 mb-5">
-            <a class="product-item" href="{{ route('article.show', $article->slug) }}">
+            <a class="product-item" href="{{ route('product.show', $article->slug) }}">
               @if($article->image)
                 <img src="{{ asset('storage/' . $article->image) }}" 
                      class="img-fluid product-thumbnail" 
@@ -333,7 +333,6 @@
     </div>
   </footer>
   <!-- End Footer Section -->
-
   <!-- Scripts -->
   <script src="{{ asset('vendor/furni/js/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ asset('vendor/furni/js/tiny-slider.js') }}"></script>
@@ -384,102 +383,108 @@
     }
     
     // ADD TO CART FUNCTIONALITY WITH AUTH CHECK
-    document.addEventListener('DOMContentLoaded', function() {
-      const productItems = document.querySelectorAll('.product-item');
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-      
-      productItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-          // Check if clicked on cross icon (add to cart)
-          if (e.target.closest('.icon-cross')) {
-            e.preventDefault();
-            
-            // Get product slug from URL
-            const productUrl = this.getAttribute('href');
-            const productSlug = productUrl.split('/').pop();
-            
-            // Check if user is authenticated (Laravel auth check)
-            const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
-            
-            if (!isAuthenticated) {
-              // Redirect to login with return URL
-              const redirectUrl = '{{ route("login") }}?redirect=' + 
-                                encodeURIComponent(window.location.pathname) +
-                                '&add_to_cart=' + productSlug;
-              window.location.href = redirectUrl;
-              return;
-            }
-            
-            // User is logged in - add to cart via AJAX
-            addToCart(productSlug);
-          }
-        });
-      });
-      
-      function addToCart(productSlug) {
-        fetch('{{ route("cart.add") }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            product_slug: productSlug,
-            quantity: 1
-          })
-        })
-        .then(response => {
-          if (response.status === 401) {
-            // Session expired - redirect to login
-            window.location.href = '{{ route("login") }}?redirect=' + encodeURIComponent(window.location.pathname);
-            throw new Error('Unauthorized');
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.success) {
-            // Show success notification
-            showNotification('Product added to cart!', 'success');
-            // Update cart count in navbar
-            updateCartCount(data.cart_count);
-          } else {
-            showNotification(data.message, 'error');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showNotification('An error occurred. Please try again.', 'error');
-        });
-      }
-      
-      function showNotification(message, type) {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        notification.innerHTML = `
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+      document.addEventListener('DOMContentLoaded', function() {
+    const productItems = document.querySelectorAll('.product-item');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    productItems.forEach(item => {
+      // Handle click on the entire product card
+      item.addEventListener('click', function(e) {
+        const target = e.target;
         
-        // Add to page
-        document.body.appendChild(notification);
-        
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-          notification.remove();
-        }, 3000);
-      }
-      
-      function updateCartCount(count) {
-        const cartCountElement = document.getElementById('cart-count');
-        if (cartCountElement) {
-          cartCountElement.textContent = count;
-          cartCountElement.style.display = count > 0 ? 'block' : 'none';
+        // Check if clicked on cross icon (add to cart)
+        if (target.closest('.icon-cross') || 
+            (target.closest('img') && target.closest('img').src.includes('cross.svg'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Get product slug from URL
+          const productUrl = this.getAttribute('href');
+          const productSlug = productUrl.split('/').pop();
+          
+          // Check if user is authenticated (Laravel auth check)
+          const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
+          
+          if (!isAuthenticated) {
+            // Redirect to login with return URL
+            const redirectUrl = '{{ route("login") }}?redirect=' + 
+                              encodeURIComponent(window.location.pathname) +
+                              '&add_to_cart=' + productSlug;
+            window.location.href = redirectUrl;
+            return;
+          }
+          
+          // User is logged in - add to cart via AJAX
+          addToCart(productSlug);
         }
-      }
+        // Otherwise, let the link go to product details page
+      });
     });
+    
+    function addToCart(productSlug) {
+      fetch('{{ route("cart.add") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          product_slug: productSlug,
+          quantity: 1
+        })
+      })
+      .then(response => {
+        if (response.status === 401) {
+          // Session expired - redirect to login
+          window.location.href = '{{ route("login") }}?redirect=' + encodeURIComponent(window.location.pathname);
+          throw new Error('Unauthorized');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Show success notification
+          showNotification(data.message, 'success');
+          // Update cart count in navbar
+          updateCartCount(data.cart_count);
+        } else {
+          showNotification(data.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+      });
+    }
+    
+    function showNotification(message, type) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+      notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      // Add to page
+      document.body.appendChild(notification);
+      
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+    
+    function updateCartCount(count) {
+      const cartCountElement = document.getElementById('cart-count');
+      if (cartCountElement) {
+        cartCountElement.textContent = count;
+        cartCountElement.style.display = count > 0 ? 'block' : 'none';
+      }
+    }
+  });
   </script>
 </body>
 </html>
