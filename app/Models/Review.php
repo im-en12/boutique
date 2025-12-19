@@ -13,6 +13,7 @@ class Review extends Model
     protected $fillable = [
         'user_id',
         'article_id',
+        'order_id', // ADD THIS LINE
         'rating',
         'comment',
     ];
@@ -29,5 +30,11 @@ class Review extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // ADD THIS RELATIONSHIP
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 }

@@ -36,4 +36,15 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+      public function canBeCancelled(): bool
+    {
+ // Can't cancel if already cancelled
+        if ($this->status === self::STATUS_CANCELLED) {
+            return false;
+        }
+        
+        // Can only cancel pending orders within 24 hours
+        $hoursSinceOrder = now()->diffInHours($this->created_at);
+        return $this->status === self::STATUS_PENDING && $hoursSinceOrder <= 24;
+    }
 }

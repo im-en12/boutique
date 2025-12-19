@@ -26,6 +26,14 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
         $request->session()->regenerate();
+           $user = Auth::user();
+        
+        // ========== CHECK IF USER IS ADMIN ==========
+        if ($user->role === 'admin') {
+            // Admin users should only see admin dashboard
+            // Skip all cart merging logic for admins
+            return redirect()->route('admin.dashboard');
+        }
         
         // Get session cart before clearing
         $sessionCart = session()->get('guest_cart', []);

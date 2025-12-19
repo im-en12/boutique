@@ -1,3 +1,54 @@
+<style>
+/* === GREEN / WOODY THEME FOR BREEZE AUTH === */
+
+/* Page background */
+body {
+    background: linear-gradient(
+        rgba(59, 93, 80, 0.85),
+        rgba(59, 93, 80, 0.85)
+    ),
+    url('{{ asset("vendor/furni/images/wood-bg.jpg") }}') center / cover no-repeat;
+}
+
+/* Card (Breeze default container) */
+.max-w-md {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+/* Titles */
+h2, h3 {
+    color: #3b5d50;
+    font-weight: 700;
+}
+
+/* Inputs */
+input {
+    border-radius: 8px !important;
+}
+
+input:focus {
+    border-color: #3b5d50 !important;
+    box-shadow: 0 0 0 0.15rem rgba(59,93,80,.25) !important;
+}
+
+/* Primary button */
+button {
+    background-color: #3b5d50 !important;
+    border: none !important;
+}
+
+button:hover {
+    background-color: #2f4b41 !important;
+}
+
+/* Links */
+a {
+    color: #3b5d50 !important;
+}
+</style>
+
 <x-guest-layout>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />

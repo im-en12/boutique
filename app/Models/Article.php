@@ -91,4 +91,8 @@ class Article extends Model
     {
         return $this->stock > 0;
     }
+    public function orderItems(): HasMany
+{
+    return $this->hasMany(OrderItem::class);
+}
 }

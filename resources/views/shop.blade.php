@@ -19,79 +19,54 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css">
   
   <title>Shop - Furniture Store</title>
+   <style>
+    /* Heart icon styles */
+    .product-heart {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+    }
+    .product-heart button {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .product-heart button:hover {
+      background: white;
+      transform: scale(1.1);
+    }
+    .product-heart i {
+      font-size: 1.2rem;
+    }
+    .product-item {
+      position: relative;
+      display: block;
+    }
+    .product-thumbnail {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    .product-badges {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 5;
+    }
+  </style>
 </head>
 
 <body>
 
   <!-- Start Header/Navigation -->
-  <nav class="custom-navbar navbar navbar navbar-expand-md navbar-dark bg-dark" arial-label="Furni navigation bar">
-    <div class="container">
-      <a class="navbar-brand" href="{{ url('/') }}">Furni<span>.</span></a>
+ @include('partials.navigation')
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsFurni" aria-controls="navbarsFurni" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarsFurni">
-        <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url('/') }}">Home</a>
-          </li>
-          <li class="active"><a class="nav-link" href="{{ route('shop') }}">Shop</a></li>
-          <li><a class="nav-link" href="#">About us</a></li>
-          <li><a class="nav-link" href="#">Services</a></li>
-          <li><a class="nav-link" href="#">Blog</a></li>
-          <li><a class="nav-link" href="#">Contact us</a></li>
-        </ul>
-<ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
-    @auth
-        <!-- When logged in: Show user dropdown -->
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                <img src="{{ asset('vendor/furni/images/user.svg') }}">
-                <span class="d-none d-md-inline ms-1">{{ Auth::user()->name }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <!-- Use dashboard route instead of profile.edit -->
-                <li><a class="dropdown-item" href="{{ route('dashboard') }}">Dashboard</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="dropdown-item">Logout</button>
-                    </form>
-                </li>
-            </ul>
-        </li>
-    @else
-        <!-- When NOT logged in: Show login link -->
-        <li>
-            <a class="nav-link" href="{{ route('login') }}">
-                <img src="{{ asset('vendor/furni/images/user.svg') }}">
-            </a>
-        </li>
-    @endauth
-    
-    <!-- Cart icon -->
-    <li>
-        <a class="nav-link position-relative" href="{{ route('cart.view') }}">
-            <img src="{{ asset('vendor/furni/images/cart.svg') }}">
-            @auth
-                @php
-                    $cartCount = App\Models\Cart::where('user_id', auth()->id())->count();
-                @endphp
-                @if($cartCount > 0)
-                    <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ $cartCount }}
-                    </span>
-                @endif
-            @endauth
-        </a>
-    </li>
-</ul>
-      </div>
-    </div>
-  </nav>
   <!-- End Header/Navigation -->
 
   <!-- Start Hero Section -->
@@ -235,6 +210,33 @@
                   {{ Str::limit($article->excerpt, 60) }}
                 </p>
               @endif
+              <!-- HEART ICON - TOP RIGHT CORNER -->
+                <div class="product-heart">
+                  @auth
+                    <form action="{{ route('dashboard.favorite.toggle', $article->id) }}" 
+                          method="POST" 
+                          class="d-inline favorite-toggle" 
+                          data-article-id="{{ $article->id }}">
+                      @csrf
+                      <button type="submit" class="btn btn-link p-0 border-0">
+                        @php
+                          $isFavorite = Auth::user()->favorites()->where('article_id', $article->id)->exists();
+                        @endphp
+                        @if($isFavorite)
+                          <i class="fas fa-heart text-danger"></i>
+                        @else
+                          <i class="far fa-heart text-dark"></i>
+                        @endif
+                      </button>
+                    </form>
+                  @else
+                    <a href="{{ route('login') }}?redirect={{ urlencode(request()->fullUrl()) }}" 
+                       class="btn btn-link p-0 border-0">
+                      <i class="far fa-heart text-dark"></i>
+                    </a>
+                  @endauth
+                </div>
+              
               
               <strong class="product-price">${{ number_format($article->price, 2) }}</strong>
               

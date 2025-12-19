@@ -153,7 +153,82 @@ class OrderController extends Controller
             ->where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+        //add cancellation option
+        $canCancel = $order->canBeCancelled();
+        return view('order-confirmation', compact('order', 'canCancel'));
+    }   
+    /**
+     * ADMIN: List all orders
+     */
+    public function adminIndex(Request $request)
+    {
+        // Check if user is admin
+        if (!Auth::check() || !Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
         
-        return view('order-confirmation', compact('order'));
+        $status = $request->get('status');
+        
+        $orders = Order::with('user')
+            ->when($status, function($query, $status) {
+                return $query->where('status', $status);
+            })
+            ->latest()
+            ->paginate(20);
+            
+        return view('admin.orders.index', compact('orders'));
+    }
+    
+    /**
+     * ADMIN: Show order details
+     */
+    public function adminShow(Order $order)
+    {
+        if (!Auth::check() || !Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+        
+        $order->load(['user', 'items.article']);
+        
+        return view('admin.orders.show', compact('order'));
+    }
+    
+    /**
+     * ADMIN: Update order status
+     */
+    public function adminUpdateStatus(Request $request, Order $order)
+    {
+        if (!Auth::check() || !Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+        
+        $request->validate([
+            'status' => 'required|in:pending,paid,shipped,delivered,cancelled',
+        ]);
+        
+        $oldStatus = $order->status;
+        $newStatus = $request->status;
+        
+        // Update order status
+        $order->status = $newStatus;
+        $order->save();
+        
+        // If changing to delivered
+        if ($oldStatus !== Order::STATUS_DELIVERED && $newStatus === Order::STATUS_DELIVERED) {
+            // Order is now delivered - customer can review
+        }
+        
+        // If cancelling, restore stock
+        if ($newStatus === Order::STATUS_CANCELLED && $oldStatus !== Order::STATUS_CANCELLED) {
+            foreach ($order->items as $item) {
+                $article = $item->article;
+                $article->stock += $item->quantity;
+                $article->sales_count -= $item->quantity;
+                $article->save();
+            }
+        }
+        
+        return redirect()->route('admin.orders.index')
+            ->with('success', "Order #{$order->id} status updated to " . ucfirst($newStatus));
     }
 }
